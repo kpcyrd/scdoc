@@ -1,6 +1,6 @@
 VERSION=1.2.3
 CFLAGS=-g -DVERSION='"$(VERSION)"' -Wall -Wextra -Werror -Wno-unused-parameter
-LDFLAGS=-static
+LDFLAGS=-fPIE -Wl,-z,relro,-z,now
 INCLUDE=-Iinclude
 PREFIX=/usr/local
 DESTDIR=
