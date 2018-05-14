@@ -13,7 +13,7 @@ HOST_SCDOC=./scdoc
 
 OBJECTS=\
 	$(OUTDIR)/main.o \
-	$(OUTDIR)/string.o \
+	$(OUTDIR)/str.o \
 	$(OUTDIR)/utf8_chsize.o \
 	$(OUTDIR)/utf8_decode.o \
 	$(OUTDIR)/utf8_encode.o \

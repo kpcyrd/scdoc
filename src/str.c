@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdint.h>
-#include "string.h"
+#include "str.h"
 #include "unicode.h"
 
 static void sanity_check(str_t *str) {

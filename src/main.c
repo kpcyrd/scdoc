@@ -5,7 +5,10 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-#include "string.h"
+#include <limits.h>
+#include <errno.h>
+#include <string.h>
+#include "str.h"
 #include "unicode.h"
 #include "util.h"
 
@@ -41,11 +44,49 @@ static void parse_preamble(struct parser *p) {
 	str_t *name = str_create();
 	int section = -1;
 	uint32_t ch;
+
 	char date[256];
 	time_t now;
-	time(&now);
-	struct tm *now_tm = localtime(&now);
+	struct tm *now_tm;
+	unsigned long long epoch;
+	char *source_date_epoch = getenv("SOURCE_DATE_EPOCH");
+	char *endptr;
+
+	if (source_date_epoch) {
+		errno = 0;
+		epoch = strtoull(source_date_epoch, &endptr, 10);
+
+		if ((errno == ERANGE && (epoch == ULLONG_MAX || epoch == 0))
+				|| (errno != 0 && epoch == 0)) {
+			fprintf(stderr, "Environment variable $SOURCE_DATE_EPOCH: strtoull: %s\n", strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+
+		if (endptr == source_date_epoch) {
+			fprintf(stderr, "Environment variable $SOURCE_DATE_EPOCH: No digits were found: %s\n", endptr);
+			exit(EXIT_FAILURE);
+		}
+
+
+		if (*endptr != '\0') {
+			fprintf(stderr, "Environment variable $SOURCE_DATE_EPOCH: Trailing garbage: %s\n", endptr);
+			exit(EXIT_FAILURE);
+		}
+
+		if (epoch > ULONG_MAX) {
+			fprintf(stderr, "Environment variable $SOURCE_DATE_EPOCH: value must be smaller than or equal to %lu but was found to be: %llu \n", ULONG_MAX, epoch);
+			exit(EXIT_FAILURE);
+		}
+
+		now = epoch;
+		now_tm = gmtime(&now);
+	} else {
+		time(&now);
+		now_tm = localtime(&now);
+	}
+
 	strftime(date, sizeof(date), "%F", now_tm);
+
 	while ((ch = parser_getch(p)) != UTF8_INVALID) {
 		if (isalnum(ch)) {
 			assert(str_append_ch(name, ch) != -1);
@@ -566,3 +607,5 @@ int main(int argc, char **argv) {
 	parse_document(&p);
 	return 0;
 }
+
+/* # vim: set ts=4 sw=4 noet: */
